@@ -1,43 +1,91 @@
-param($correct=0)
-$endofmonth=@(0,31,28,31,30,31,30,31,31,30,31,30,31)
-$monthodr=@("","January","Febrary","March","April","May","June","July","August","September","October","November","December")
-$weekodr=@("Su","Mo","Tu","We","Th","Fr","Sa")
-$today=get-date
-$year=$today.year
-$month=$today.month
-$day=$today.day
-$week=[string]$today.dayofweek
-$todaypoint=$today.dayofyear
-if ($year % 4 -eq 0 -and $year % 100 -ne 0 -or $year % 400 -eq 0) {
-    $endofmonth[2]++
+Param([Switch] $w)
+#
+#-------------------------------------------
+# wcal.ps1 ver.0.3  2015.9.12  (c)Takeru.
+#
+#
+#      Copyright (c) 2015 Takeru.
+#      Release under the MIT license
+#      http://opensource.org/licenses/MIT
+#
+#-------------------------------------------
+#
+$current = Get-Date
+$month_odr = @(@("", 0), @("January", 31) ,@("Febrary", 28), @("March", 31), @("April", 30),
+            @("May", 31), @("June", 30), @("July", 31), @("August", 31),
+            @("September", 30), @("October", 31), @("November", 30),@("December", 31))
+$week_odr = @("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa")
+if ($current.Year % 4 -eq 0 -And $current.Year % 100 -ne 0 -Or $current.Year % 400 -eq 0) {
+    $month_odr[2][1]++
 }
+$curr_dateyear = 0
 for ($i = 1; $i -le 12; $i++) {
-	$endofmonth[0]=$endofmonth[0] + $endofmonth[$i]
+    $curr_dateyear = $curr_dateyear + $month_odr[$i][1]
 }
-$endofcurrmonth=$endofmonth[$month]
-$endofprevmonth=$endofmonth[$month - 1]
 for ($i = 0; $i -lt 7; $i++) {
-    if (($week).substring(0,2) -eq $weekodr[$i]) {
-        $currweek=$i
+    if (([String]$current.DayOfWeek).SubString(0,2) -eq $week_odr[$i]) {
+        $curr_week = $i
     }
 }
-"{0} {1}, {2} ({3}/{4})" -f $monthodr[$month],$day,$year,$todaypoint,$endofmonth[0]
-"{0,3}{1,3}{2,3}{3,3}{4,3}{5,3}{6,3}" -f $weekodr
-$dateseq=@(0,0,0,0,0,0,0,0)
-$marker=@("  ","  ","  ","  ","  ","  ","  ")
-$dateseq[0]=$day - $currweek + 7 * $correct
-for ($n = 0; $n -lt 7; $n++) {
-    $dateseq[$n + 1]=$dateseq[$n] + 1
-    if ($dateseq[$n] -le 0) {
-        $dateseq[$n]=$dateseq[$n]+$endofprevmonth
-    } elseif ($dateseq[$n] -gt $endofcurrmonth) {
-        $dateseq[$n]=$dateseq[$n]-$endofcurrmonth
-    }
-    if ($n -eq $currweek) {
-        $marker[$n] = "^^"
+$disp_date = New-Object "Object[]" 126
+$fg_wd = $(Get-Host).UI.rawUI.ForegroundColor
+$bg_nm = $(Get-Host).UI.rawUI.BackgroundColor
+$fg_hd = "Magenta"
+$bg_td = "Gray"
+$date_count = $current.Day - $curr_week
+if ($date_count -ge 0) {
+    $date_count = $date_count % 7
+}
+if (($date_count -gt 1) -And (-Not $w)) {
+    $date_count = $date_count - 7
+}
+for ($n = 0; $n -lt 42; $n++) {
+    if (($date_count -le 0) -Or ($date_count -gt $month_odr[$current.Month][1])) {
+        $disp_date[3 * $n] = "  "
+    } elseif ($date_count -lt 10) {
+        $disp_date[3 * $n] = " " + $date_count
     } else {
-        $marker[$n] = "  "
-	}
+        $disp_date[3 * $n] = [String]$date_count
+    }
+    if (($n % 7 -eq 0) -Or ($n % 7 -eq 6)) {
+        $disp_date[3 * $n + 1] = $fg_hd
+    } else {
+        $disp_date[3 * $n + 1] = $fg_wd
+    }
+    if ($date_count -eq $current.day) {
+        $disp_date[3 * $n + 2] = $bg_td
+    } else {
+        $disp_date[3 * $n + 2] = $bg_nm
+    }
+    $date_count++
 }
-"{0,3}{1,3}{2,3}{3,3}{4,3}{5,3}{6,3}" -f $dateseq
-"{0,3}{1,3}{2,3}{3,3}{4,3}{5,3}{6,3}" -f $marker
+$title = $month_odr[$current.Month][0] + " " + $current.Year
+if ($w) {
+    $title = $title + " (" + $current.DayOfYear + "/" + $curr_dateyear + ")"
+    $loop = 1
+    } else {
+    for ($n = 0; $n -lt (20 - $title.length)/2; $n++) {
+        Write-Host " " -NoNewLine
+    }
+    $loop = 6
+}
+Write-Host $title
+for ($n = 0; $n -lt 7; $n++) {
+    if (($n -eq 0) -Or ($n -eq 6)) {
+        Write-Host $week_odr[$n] -NoNewLine -ForegroundColor Magenta
+    } else {
+        Write-Host $week_odr[$n] -NoNewLine
+    }
+    Write-Host " " -NoNewLine
+}
+Write-Host
+for ($i = 0; $i -lt $loop; $i++) {
+    for ($j = 0; $j -lt 7; $j++) {
+        Write-Host $disp_date[($i * 7 + $j) * 3] -NoNewLine -ForegroundColor $disp_date[($i * 7 + $j) * 3 + 1] -BackgroundColor $disp_date[($i * 7 + $j) * 3 + 2]
+        Write-Host " " -NoNewLine
+    }
+    Write-Host
+}
+if ($w) {
+    Write-Host
+}
