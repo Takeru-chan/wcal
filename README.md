@@ -1,5 +1,5 @@
-#Weekly calendar for PowerShell.
-今週のカレンダーを表示するPowerShellスクリプトです。  
+#Display calendar for PowerShell.
+今週/今月のカレンダーを表示するPowerShellスクリプトです。  
 [shellscript版のxcal](https://github.com/Takeru-chan/xcal)をPowerShellで書き直しています。  
 とりあえず今月の表示まで。  
 
