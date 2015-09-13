@@ -1,25 +1,32 @@
-Param([Switch] $w, [Int] $m, [Int] $y)
-#
+Param([Switch] $h, [Switch] $v, [Switch] $w, [Int] $m, [Int] $y)
 #--------------------------------------------------------------------------
-# wcal.ps1 ver.0.4  2015.9.13  (c)Takeru.
-#
-# Usage:
-#       wxal.ps1 [-m month [year]]
-#       wxal.ps1 -w
-#
-# Description:
-#       The wcal utility displays a simple calendar.
-#       If arguments are not specified, the current month is displayed.
-#
-#       -m      Display the specified month.
-#       -w      Display only this week.
-#
-#       Copyright (c) 2015 Takeru.
-#       Release under the MIT license
-#       http://opensource.org/licenses/MIT
-#
+$credit = @"
+
+  wcal.ps1 ver.0.5  2015.9.13  (c)Takeru.
+ 
+  Usage:
+        wcal.ps1 [-m month [year]]
+        wcal.ps1 -w
+        wcal.ps1 -v
+ 
+  Description:
+        The wcal utility displays a simple calendar.
+        If arguments are not specified, the current month is displayed.
+ 
+        -m      Display the specified month.
+        -w      Display only this week.
+        -v      Display this credit.
+ 
+        Copyright (c) 2015 Takeru.
+        Release under the MIT license
+        http://opensource.org/licenses/MIT
+ 
+"@
 #--------------------------------------------------------------------------
-#
+if (($v) -Or ($h)) {
+	$credit
+	return
+}
 $current = Get-Date
 # 表示年月を指定
 if (($m -ge 1) -And ($m -le 12) -And (-Not $w)) {
@@ -112,5 +119,22 @@ for ($i = 0; $i -lt $loop; $i++) {
         Write-Host " " -NoNewLine
     }
     Write-Host                          # 週の改行
+}
+if ($w) {
+	$first_sunday = ($current.DayOfYear - $curr_week) % 7
+	$week_us = 1 + ($current.DayOfYear - $first_sunday) / 7
+	if ($first_sunday -ne 1) {
+		$week_us++						# １月最初の日曜日が元日でなければ、先週が第１週
+	}
+	Write-Host "Week" $week_us "(US) / " -NoNewLine
+	$first_monday = ($current.DayOfYear - $curr_week + 1) % 7
+	$week_eu = 1 + ($current.DayOfYear - $first_monday + 1) / 7
+	if ($first_monday -gt 4) {
+		$week_eu++ 						# １月最初の月曜日が４日よりも後であれば、先週が第１週
+	}
+	if ($curr_week -eq 0) {				# EUの週始まりは月曜
+		$week_eu--
+	}
+	Write-Host "Week" $week_eu "(EU/ISO)"
 }
 Write-Host                              # 月の改行
