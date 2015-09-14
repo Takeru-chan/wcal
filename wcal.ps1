@@ -2,7 +2,7 @@ Param([Switch] $h, [Switch] $v, [Switch] $w, [Int] $m, [Int] $y)
 #--------------------------------------------------------------------------
 $credit = @"
 
-  wcal.ps1 ver.0.51  2015.9.14  (c)Takeru.
+  wcal.ps1 ver.0.52  2015.9.14  (c)Takeru.
  
   Usage:
         wcal.ps1 [-m month [year]]
@@ -26,6 +26,23 @@ $credit = @"
 if (($v) -Or ($h)) {
 	$credit
 	return
+}
+# 環境変数読み込み
+$env_lst = @("WEEK", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
+$hol_wk = @(9, 9, 9, 9, 9, 9, 9)
+for ($n = 0; $n -le 12; $n++) {
+	$env_lst[$n] = [System.Environment]::GetEnvironmentVariable("XCAL" + $env_lst[$n])
+}
+for ($n =0; $n -lt $env_lst[0].Length; $n++) {
+	switch ($env_lst[0][$n]) {
+		0 {$hol_wk[0] = 0}
+		1 {$hol_wk[1] = 1}
+		2 {$hol_wk[2] = 2}
+		3 {$hol_wk[3] = 3}
+		4 {$hol_wk[4] = 4}
+		5 {$hol_wk[5] = 5}
+		6 {$hol_wk[6] = 6}
+	}
 }
 $current = Get-Date
 # 表示年月を指定
@@ -66,7 +83,7 @@ Write-Host $title
 # 曜日タイトル表示
 $week_odr = @("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa")
 for ($n = 0; $n -lt 7; $n++) {
-    if (($n -eq 0) -Or ($n -eq 6)) {
+    if ($hol_wk[$n] -ne 9) {			# 指定週を休日色に
         Write-Host $week_odr[$n] -NoNewLine -ForegroundColor Magenta
     } else {
         Write-Host $week_odr[$n] -NoNewLine
@@ -78,7 +95,6 @@ Write-Host
 $fg_wd = $(Get-Host).UI.rawUI.ForegroundColor
 $bg_nm = $(Get-Host).UI.rawUI.BackgroundColor
 $fg_hd = "Magenta"
-$bg_td = "Gray"
 if ($w) {                               # 今週の日曜の日付を取得
     $chk_week = $current.DayOfWeek
     $target_day = $current.Day
@@ -101,13 +117,14 @@ for ($n = 0; $n -lt 42; $n++) {
     } else {
         $disp_date[3 * $n] = [String]$date_count
     }
-    if (($n % 7 -eq 0) -Or ($n % 7 -eq 6)) {
+    if ($hol_wk[$n % 7] -ne 9) {		# 指定週を休日色に
         $disp_date[3 * $n + 1] = $fg_hd
     } else {
         $disp_date[3 * $n + 1] = $fg_wd
     }
     if (($date_count -eq $current.day) -And ($disp_cal.month -eq $current.month) -And ($disp_cal.year -eq $current.year)) {
-        $disp_date[3 * $n + 2] = $bg_td
+        $disp_date[3 * $n + 2] = $disp_date[3 * $n + 1]
+        $disp_date[3 * $n + 1] = $bg_nm
     } else {
         $disp_date[3 * $n + 2] = $bg_nm
     }
