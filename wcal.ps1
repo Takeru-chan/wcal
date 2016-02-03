@@ -2,7 +2,7 @@ Param([Switch] $h, [Switch] $v, [Switch] $w, [Int] $m, [Int] $y)
 #--------------------------------------------------------------------------
 $credit = @"
 
-  wcal.ps1 ver.0.52  2015.9.14  (c)Takeru.
+  wcal.ps1 ver.0.53  2016.2.3  (c)Takeru.
  
   Usage:
         wcal.ps1 [-m month [year]]
@@ -143,6 +143,7 @@ if ($w) {
 	if ($first_sunday -ne 1) {
 		$week_us++						# １月最初の日曜日が元日でなければ、先週が第１週
 	}
+	if ($week_us -ge 53) {$week_us = 1}
 	Write-Host "Week" $week_us "(US) / " -NoNewLine
 	$first_monday = ($current.DayOfYear - $curr_week + 1) % 7
 	$week_eu = 1 + ($current.DayOfYear - $curr_week - $first_monday + 1) / 7
@@ -152,6 +153,7 @@ if ($w) {
 	if ($curr_week -eq 0) {				# EUの週始まりは月曜
 		$week_eu--
 	}
+	if ($week_eu -ge 53) {$week_eu = 1}
 	Write-Host "Week" $week_eu "(EU/ISO)"
 }
 Write-Host                              # 月の改行
